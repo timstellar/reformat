@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма: Заявка на вывоз отходов</title>
+    <!-- Подключаем файл со стилями -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <h1>Создание заявки на вывоз отходов I и II классов опасности</h1>
+
+    <!-- Сама форма -->
+    <form id="wasteRemovalForm" onsubmit="return false;">
+
+        <!-- Секция: Общая информация о заявке -->
+        <fieldset>
+            <legend>Общая информация</legend>
+            <div>
+                <label for="request_number">Номер заявки:</label>
+                <input type="text" id="request_number" required placeholder="Пример: ЗВО-2025-04-18-002">
+            </div>
+            <div>
+                <label for="request_date">Дата заявки:</label>
+                <input type="date" id="request_date" required>
+            </div>
+        </fieldset>
+
+        <!-- Секция: Информация о Заявителе -->
+        <fieldset>
+            <legend>Заявитель</legend>
+            <div>
+                <label for="requester_name">Наименование:</label>
+                <input type="text" id="requester_name" required placeholder="ООО \"ПромТех\"">
+            </div>
+            <div>
+                <label for="requester_inn">ИНН:</label>
+                <input type="text" id="requester_inn" required pattern="\d{10}|\d{12}" title="Введите 10 или 12 цифр ИНН" placeholder="7723456789">
+            </div>
+            <div>
+                <label for="requester_address">Юридический адрес:</label>
+                <textarea id="requester_address" rows="2" required placeholder="123789, г. Москва, пр. Индустриальный, д. 15"></textarea>
+            </div>
+            <div>
+                <label for="requester_contact_person">Контактное лицо (ФИО):</label>
+                <input type="text" id="requester_contact_person" required placeholder="Смирнов А.В.">
+            </div>
+            <div>
+                <label for="requester_phone">Телефон:</label>
+                <input type="tel" id="requester_phone" required placeholder="+7 (495) 123-45-67">
+            </div>
+
+            <!-- Вложенная секция: Представитель Заявителя -->
+            <fieldset class="nested">
+                <legend>Представитель Заявителя (для подписи)</legend>
+                 <div>
+                    <label for="representative_name">ФИО представителя:</label>
+                    <input type="text" id="representative_name" required placeholder="Смирнов А.В.">
+                </div>
+                 <div>
+                    <label for="representative_position">Должность представителя:</label>
+                    <input type="text" id="representative_position" required placeholder="Главный инженер">
+                </div>
+            </fieldset>
+        </fieldset>
+
+        <!-- Секция: Договор -->
+        <fieldset>
+            <legend>Договор</legend>
+             <div>
+                <label for="contract_number">Номер договора:</label>
+                <input type="text" id="contract_number" required placeholder="ФЭО-2025-042">
+            </div>
+            <div>
+                <label for="contract_date">Дата договора:</label>
+                <input type="date" id="contract_date" required>
+            </div>
+        </fieldset>
+
+        <!-- Секция: Детали Вывоза -->
+        <fieldset>
+            <legend>Детали Вывоза</legend>
+             <div>
+                <label for="pickup_address">Адрес места накопления (вывоза):</label>
+                <textarea id="pickup_address" rows="2" required placeholder="123789, г. Москва, пр. Индустриальный, д. 15, склад №3"></textarea>
+            </div>
+            <div>
+                <label for="preferred_date">Желаемая дата вывоза:</label>
+                <input type="date" id="preferred_date" required>
+            </div>
+             <div>
+                <label for="preferred_time">Желаемое время вывоза:</label>
+                <input type="text" id="preferred_time" required placeholder="Пример: 10:00-14:00">
+            </div>
+        </fieldset>
+
+        <!-- Секция: Спецификация Отходов (динамическая) -->
+        <fieldset>
+            <legend>Спецификация Отходов</legend>
+            <div id="wastesContainer">
+                <!-- Сюда JavaScript будет добавлять строки для отходов -->
+            </div>
+            <button type="button" id="addWasteBtn">Добавить отход</button>
+        </fieldset>
+
+        <!-- Секция: Дополнительная информация и QR-код (обновлено) -->
+        <fieldset>
+            <legend>Дополнительная информация и QR-код</legend>
+             <div>
+                <label for="special_requirements">Особые требования к вывозу:</label>
+                <textarea id="special_requirements" rows="3" placeholder="Пример: Необходимо обеспечить наличие погрузочной техники"></textarea>
+            </div>
+             <div>
+                <label for="additional_info">Прочая информация:</label>
+                <textarea id="additional_info" rows="3" placeholder="Пример: Доступ на территорию по предварительному согласованию"></textarea>
+            </div>
+            <!-- НОВОЕ ПОЛЕ ДЛЯ QR -->
+            <div>
+                <label for="qr_url">URL для QR-кода (необязательно):</label>
+                <input type="url" id="qr_url" placeholder="https://example.com/verify/...">
+                <small>Если указать URL, в PDF будет добавлен QR-код, ведущий на эту страницу.</small>
+            </div>
+        </fieldset>
+
+        <!-- Кнопка для генерации PDF (изменен текст и id) -->
+        <div class="submit-area">
+            <button type="submit" id="generatePdfBtn">Сгенерировать и скачать PDF</button>
+        </div>
+
+    </form>
+
+    <!-- Область для сообщений пользователю (добавлено) -->
+    <div id="userMessage" class="message-area"></div>
+
+    <!-- Подключаем файл JavaScript в конце body -->
+    <script src="/static/script_removal.js"></script>
+</body>
+</html>
