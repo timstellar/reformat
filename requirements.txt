@@ -5,7 +5,7 @@ marshmallow==3.18.0
 marshmallow-sqlalchemy==0.29.0
 flask-jwt-extended==4.4.4
 python-dotenv==1.0.0
-werkzeug==2.2.3
+werkzeug==3.0.6
 pyjwt==2.6.0
 sqlalchemy==1.4.46
 
