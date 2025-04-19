@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заявка на вывоз отходов - Avant-Garde</title>
+    <!-- Рекомендуется подключить шрифты, если возможно -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-main: 'Montserrat', Arial, sans-serif;
+            --font-code: 'Source Code Pro', monospace;
+            --color-bg: #f8f9fa;
+            --color-text: #212529;
+            --color-primary: #0b7a75; /* Deep Teal */
+            --color-accent: #f56a79;  /* Coral Pink */
+            --color-secondary: #c2a83e; /* Muted Gold */
+            --color-border: #dee2e6;
+            --color-status-approved: #2a9d8f;
+            --color-status-pending: #e9c46a;
+            --color-status-rejected: #e76f51;
+        }
+
+        body {
+            font-family: var(--font-main);
+            font-size: 9.5pt; /* Базовый размер чуть меньше */
+            line-height: 1.55;
+            margin: 0; /* Убираем стандартные поля body */
+            padding: 1.5cm; /* Внутренние отступы для контента */
+            color: var(--color-text);
+            background-color: var(--color-bg);
+            position: relative; /* Для позиционирования псевдоэлементов */
+            overflow: hidden; /* Чтобы псевдоэлементы не вылезали за печать */
+        }
+
+        /* Диагональный фоновый элемент (может быть сложным для PDF) */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            left: -20%;
+            width: 70%;
+            height: 130%;
+            background: linear-gradient(45deg, rgba(11, 122, 117, 0.03), rgba(11, 122, 117, 0));
+            transform: rotate(-30deg);
+            z-index: 0;
+            pointer-events: none; /* Чтобы не мешал контенту */
+        }
+
+        .content-wrapper { /* Обертка для контента поверх фона */
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- Шапка с QR и Заголовком --- */
+        .header-section {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            gap: 30px;
+        }
+        .qr-area {
+            flex-shrink: 0;
+            width: 140px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid var(--color-border);
+            box-shadow: 3px 3px 8px rgba(0,0,0,0.05);
+            text-align: center;
+            position: relative;
+            /* Небольшой поворот для динамики (рискованно для PDF) */
+            /* transform: rotate(-2deg); */
+             border-left: 5px solid var(--color-secondary); /* Золотой акцент */
+        }
+        .qr-area img { display: block; width: 100%; height: auto; }
+        .qr-area span { font-size: 8pt; color: #6c757d; margin-top: 8px; display: block;}
+
+        .title-area { flex-grow: 1; padding-top: 10px; }
+        .main-title {
+            font-size: 20pt;
+            font-weight: 700; /* Bold */
+            margin: 0 0 5px 0;
+            color: var(--color-primary);
+            line-height: 1.2;
+        }
+        .sub-title { font-size: 11pt; color: #6c757d; margin: 0; }
+        .doc-meta { font-size: 10pt; font-weight: 600; color: var(--color-text); margin-top: 10px;}
+
+        /* --- Статус --- */
+        .status-banner {
+            padding: 10px 20px;
+            margin: 0 -20px 30px -20px; /* Выходит за края основной колонки */
+            text-align: center;
+            font-weight: 600;
+            font-size: 11pt;
+            color: #fff;
+            position: relative;
+            overflow: hidden; /* Для псевдоэлементов */
+        }
+        /* Цветной фон для статуса */
+        .status-approved { background-color: var(--color-status-approved); }
+        .status-pending { background-color: var(--color-status-pending); color: var(--color-text); }
+        .status-rejected { background-color: var(--color-status-rejected); }
+        /* Декоративные полосы на статусе (псевдоэлементы) */
+         .status-banner::before, .status-banner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: skewX(-20deg);
+         }
+         .status-banner::before { left: 10px; }
+         .status-banner::after { right: 10px; }
+
+
+        /* --- Информационные Карточки --- */
+        .info-card {
+            background-color: #fff;
+            border: 1px solid var(--color-border);
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            border-top: 3px solid var(--color-primary); /* Цветной акцент сверху */
+        }
+        .card-title {
+            font-size: 11pt;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin: -15px -20px 15px -20px;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--color-border);
+            background-color: rgba(11, 122, 117, 0.05); /* Легкий фон заголовка */
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: 150px auto; /* Метка | Данные */
+            gap: 8px 15px;
+        }
+        .grid-label { font-weight: 600; color: #495057; font-size: 9pt; }
+        .grid-value { font-size: 9.5pt; }
+        /* Иконки (требуют подключения библиотеки или SVG) - пример */
+        .grid-label::before { /* Псевдоэлемент для иконки */
+             /* content: '👤'; /* Пример иконки - лучше использовать FontAwesome или SVG */
+             /* display: inline-block; margin-right: 8px; color: var(--color-primary); */
+        }
+
+        /* --- Таблица --- */
+        .table-section { margin-top: 30px; }
+        .table-title {
+            font-size: 13pt;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate; /* Для использования border-spacing */
+            border-spacing: 0;
+            font-size: 9pt;
+             border: 1px solid var(--color-border);
+             border-radius: 4px;
+             overflow: hidden; /* Чтобы скругление работало */
+             box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: middle; /* Центрируем по вертикали */
+            border-bottom: 1px solid var(--color-border);
+        }
+        th {
+            background: linear-gradient(to bottom, var(--color-primary), darken(var(--color-primary), 5%)); /* Градиент в шапке */
+            color: #fff;
+            font-weight: 600;
+            font-size: 10pt;
+            border-bottom: 2px solid darken(var(--color-primary), 10%);
+            text-align: center;
+        }
+        tbody tr:last-child td { border-bottom: none; } /* Убираем нижнюю границу у последней строки */
+        tbody tr:nth-child(even) { background-color: rgba(11, 122, 117, 0.03); } /* Легкая зебра */
+        tbody tr:hover { background-color: rgba(245, 106, 121, 0.1); } /* Подсветка при наведении (не для PDF) */
+
+        .code-cell { font-family: var(--font-code); text-align: center; }
+        .class-cell { text-align: center; font-weight: 600; }
+        .qty-cell { text-align: right; font-weight: 600; }
+
+        .total-row td {
+            font-weight: 700;
+            background-color: #e9ecef;
+            color: var(--color-text);
+            font-size: 10pt;
+            border-top: 2px solid #adb5bd;
+        }
+        .total-label { text-align: right; }
+
+         /* --- Доп. информация --- */
+        .notes-area {
+            margin-top: 25px;
+            padding: 15px;
+            font-size: 9pt;
+            background-color: #fff;
+            border-left: 4px solid var(--color-secondary); /* Золотая линия слева */
+            border-top: 1px solid var(--color-border);
+             border-right: 1px solid var(--color-border);
+             border-bottom: 1px solid var(--color-border);
+             border-radius: 0 3px 3px 0;
+        }
+        .notes-area p { margin: 0 0 8px 0; }
+        .notes-area strong { color: var(--color-primary); font-weight: 600;}
+
+        /* --- Подписи --- */
+        .signatures-zone {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--color-border); /* Пунктирный разделитель */
+            display: flex;
+            justify-content: space-around; /* Распределяем равномерно */
+            gap: 30px;
+            text-align: center; /* Центрируем блоки подписей */
+        }
+        .signature-unit { width: 45%; font-size: 9pt; }
+        .signature-role { font-weight: 600; margin-bottom: 10px; color: var(--color-primary); }
+        .signature-space {
+            height: 40px;
+            border-bottom: 1px solid #adb5bd;
+            margin: 20px 0 10px 0;
+        }
+        .signature-details { color: #6c757d; line-height: 1.4; }
+        .signature-details p { margin: 2px 0; }
+
+        @media print {
+            body { margin: 0; padding: 1cm; font-size: 9pt; color: #000; background-color: #fff; }
+            body::before { display: none; } /* Убираем сложный фон */
+            .content-wrapper { }
+            .qr-area { box-shadow: none; border: 1px solid #aaa; transform: none; }
+            .status-banner { margin: 0 0 20px 0; color: #000 !important; } /* Упрощаем статус для печати */
+            .status-banner::before, .status-banner::after { display: none; }
+            .status-approved { background-color: #c3e6cb !important; border: 1px solid #aaa;}
+            .status-pending { background-color: #ffeeba !important; border: 1px solid #aaa;}
+            .status-rejected { background-color: #f5c6cb !important; border: 1px solid #aaa;}
+            .info-card { box-shadow: none; border: 1px solid #bbb; border-top: 2px solid #888; }
+            .card-title { background-color: #eee; color: #000; }
+            table { box-shadow: none; border: 1px solid #888; }
+            th, td { border-bottom: 1px solid #aaa; }
+            th { background: #ddd !important; color: #000; border-bottom: 1px solid #888;}
+            tbody tr:nth-child(even) { background-color: #f3f3f3; }
+            .notes-area { border: 1px dashed #aaa; border-left: 3px solid #888;}
+            .signatures-zone { border-top: 1px dashed #888; }
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper">
+
+    <!-- Шапка -->
+    <div class="header-section">
+        <div class="qr-area">
+            {% if qr_url_code_data_uri %}
+                <img src="{{ qr_url_code_data_uri }}" alt="QR код">
+                <span>Ссылка на сайт</span>
+            {% endif %}
+        </div>
+        <div class="title-area">
+            <h1 class="main-title">ЗАЯВКА</h1>
+            <h2 class="sub-title">на вывоз отходов I и II классов опасности</h2>
+            <div class="doc-meta">
+                № {{ request_number }} / Дата: {{ request_date }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Статус -->
+    {% if status %}
+    <div class="status-banner {% if status == 'Одобрена' %}status-approved{% elif status == 'На рассмотрении' %}status-pending{% elif status == 'Отклонена' %}status-rejected{% endif %}">
+        Статус Заявки: {{ status }} {% if status == 'Одобрена' %} (Принята {{ approval_date }}){% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Инфо-карточки -->
+    <div class="info-card">
+        <div class="card-title">Заявитель</div>
+        <div class="card-grid">
+            <div class="grid-label">Наименование:</div> <div class="grid-value">{{ requester.name }}</div>
+            <div class="grid-label">ИНН:</div> <div class="grid-value">{{ requester.inn }}</div>
+            <div class="grid-label">Адрес:</div> <div class="grid-value">{{ requester.address }}</div>
+            <div class="grid-label">Контакт:</div> <div class="grid-value">{{ requester.contact_person }}</div>
+            <div class="grid-label">Телефон:</div> <div class="grid-value">{{ requester.phone }}</div>
+        </div>
+    </div>
+
+    <div class="info-card">
+         <div class="card-title">Детали Вывоза</div>
+         <div class="card-grid">
+            <div class="grid-label">Договор:</div> <div class="grid-value">№ {{ contract.number }} от {{ contract.date }}</div>
+            <div class="grid-label">Адрес вывоза:</div> <div class="grid-value">{{ pickup_address }}</div>
+            <div class="grid-label">Желаемая дата:</div> <div class="grid-value">{{ preferred_date }}</div>
+            <div class="grid-label">Желаемое время:</div> <div class="grid-value">{{ preferred_time }}</div>
+         </div>
+    </div>
+
+    <!-- Таблица -->
+    <div class="table-section">
+        <h3 class="table-title">Спецификация Отходов</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Наименование Отхода</th>
+                    <th class="code-cell">Код ФККО</th>
+                    <th class="class-cell">Класс</th>
+                    <th class="qty-cell">Кол-во (кг)</th>
+                    <th>Упаковка</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for waste in wastes %}
+                <tr>
+                    <td style="text-align: center;">{{ loop.index }}</td>
+                    <td>{{ waste.name }}</td>
+                    <td class="code-cell">{{ waste.code }}</td>
+                    <td class="class-cell">{{ waste.hazard_class }}</td>
+                    <td class="qty-cell">{{ waste.quantity }}</td>
+                    <td>{{ waste.packaging }}</td>
+                </tr>
+                {% endfor %}
+                <!-- Итоговая строка -->
+                <tr class="total-row">
+                    <td colspan="4" class="total-label">Общее количество:</td>
+                    <td class="qty-cell">{{ total_quantity }}</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Доп. информация -->
+    {% if special_requirements or additional_info %}
+    <div class="notes-area">
+        {% if special_requirements %}
+            <p><strong>Особые требования:</strong> {{ special_requirements }}</p>
+        {% endif %}
+         {% if additional_info %}
+             <p><strong>Дополнительная информация:</strong> {{ additional_info }}</p>
+         {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Подписи -->
+    <div class="signatures-zone">
+        <div class="signature-unit">
+            <div class="signature-role">ЗАЯВИТЕЛЬ</div>
+            <div class="signature-space"></div>
+            <div class="signature-details">
+                <p>{{ requester.representative.position }}</p>
+                <p>{{ requester.representative.name }}</p>
+                <p>(Подпись)</p>
+                <p>М.П.</p>
+            </div>
+        </div>
+         {% if status == 'Одобрена' %}
+        <div class="signature-unit">
+             <div class="signature-role">ЗАЯВКУ ПРИНЯЛ (ОПЕРАТОР)</div>
+            <div class="signature-space"></div>
+             <div class="signature-details">
+                <p>{{ operator.position }}</p>
+                <p>{{ operator.name }}</p>
+                <p>(Подпись)</p>
+                <p>Дата: {{ approval_date }}</p>
+                <p>М.П.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div> <!-- /content-wrapper -->
+</body>
+</html>
