@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заявка на вывоз отходов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 2cm;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 14pt;
+            margin-bottom: 20px;
+        }
+        .info-block {
+            margin-bottom: 15px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        .info-label {
+            font-weight: bold;
+            min-width: 200px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .signatures {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-block {
+            width: 45%;
+        }
+        .signature-line {
+            border-bottom: 1px solid #000;
+            margin: 30px 0 5px 0;
+        }
+        .qr-code {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 100px;
+            height: 100px;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #000;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        @media print {
+            body {
+                margin: 0;
+                padding: 20px;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">ЗАЯВКА НА ВЫВОЗ ОТХОДОВ I И II КЛАССОВ ОПАСНОСТИ</div>
+        <div class="subtitle">№ {{ request_number }} от {{ request_date }}</div>
+    </div>
+
+    {% if qr_code_path %}
+    <div class="qr-code">
+        <img src="{{ qr_code_path }}" alt="QR код для проверки подлинности" width="100">
+    </div>
+    {% endif %}
+
+    {% if status %}
+    <div class="status {% if status == 'Одобрена' %}status-approved{% elif status == 'На рассмотрении' %}status-pending{% elif status == 'Отклонена' %}status-rejected{% endif %}">
+        Статус заявки: {{ status }}
+    </div>
+    {% endif %}
+
+    <div class="info-block">
+        <div class="info-row">
+            <div class="info-label">Заявитель:</div>
+            <div>{{ requester.name }}, ИНН {{ requester.inn }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Адрес заявителя:</div>
+            <div>{{ requester.address }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Контактное лицо:</div>
+            <div>{{ requester.contact_person }}, тел.: {{ requester.phone }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Договор:</div>
+            <div>№ {{ contract.number }} от {{ contract.date }}</div>
+        </div>
+    </div>
+
+    <div class="info-block">
+        <div class="info-row">
+            <div class="info-label">Адрес вывоза:</div>
+            <div>{{ pickup_address }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Предпочтительная дата:</div>
+            <div>{{ preferred_date }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Предпочтительное время:</div>
+            <div>{{ preferred_time }}</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Наименование отхода</th>
+                <th>Код ФККО</th>
+                <th>Класс опасности</th>
+                <th>Количество, кг</th>
+                <th>Тара, упаковка</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for waste in wastes %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ waste.name }}</td>
+                <td>{{ waste.code }}</td>
+                <td>{{ waste.hazard_class }}</td>
+                <td>{{ waste.quantity }}</td>
+                <td>{{ waste.packaging }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="4" style="text-align: right;"><strong>Итого:</strong></td>
+                <td><strong>{{ total_quantity }}</strong></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="info-block">
+        {% if special_requirements %}
+        <div class="info-row">
+            <div class="info-label">Особые требования:</div>
+            <div>{{ special_requirements }}</div>
+        </div>
+        {% endif %}
+        
+        {% if additional_info %}
+        <div class="info-row">
+            <div class="info-label">Дополнительная информация:</div>
+            <div>{{ additional_info }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="signatures">
+        <div class="signature-block">
+            <p><strong>Заявитель:</strong></p>
+            <div class="signature-line"></div>
+            <p>{{ requester.representative.position }} {{ requester.representative.name }}</p>
+            <p>М.П.</p>
+        </div>
+        
+        {% if status == 'Одобрена' %}
+        <div class="signature-block">
+            <p><strong>Заявку принял:</strong></p>
+            <div class="signature-line"></div>
+            <p>{{ operator.position }} {{ operator.name }}</p>
+            <p>Дата: {{ approval_date }}</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
