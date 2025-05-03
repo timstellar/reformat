@@ -1,4 +1,3 @@
 .env
 venv/
-backend/
 **/.DS_Store
