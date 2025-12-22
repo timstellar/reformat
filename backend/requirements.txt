@@ -1,7 +1,7 @@
 flask==2.2.3
 flask-sqlalchemy==3.0.0
 flask-marshmallow==0.15.0
-marshmallow==3.18.0
+marshmallow==3.26.2
 marshmallow-sqlalchemy==0.29.0
 flask-jwt-extended==4.4.4
 python-dotenv==1.0.0
